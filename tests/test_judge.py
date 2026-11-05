@@ -75,3 +75,15 @@ def test_unparseable_output_returns_none_after_retries():
     judge = PairwiseJudge("fake", complete_fn=complete, parse_retries=2)
     assert judge.compare("p", "x", "y") is None
     assert n["calls"] == 3
+
+
+def test_compare_many_turns_api_errors_into_none():
+    def complete(model, messages):
+        if "boom" in messages[1]["content"]:
+            raise RuntimeError("429 rate limited")
+        return '{"winner": "A"}'
+
+    judge = PairwiseJudge("fake", complete_fn=complete)
+    results = judge.compare_many([("p", "x", "y"), ("p", "boom", "y")], workers=2)
+    assert results[0] is not None and results[1] is None
+    assert len(judge.errors) == 1 and "429" in judge.errors[0]

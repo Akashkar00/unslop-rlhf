@@ -170,8 +170,23 @@ class PairwiseJudge:
         s2 = {"A": 0.0, "B": 1.0, "tie": 0.5}[second.winner]
         return Comparison(score_x=(s1 + s2) / 2, consistent=s1 == s2, reasons=(first.reason, second.reason))
 
+    def _compare_or_none(self, prompt: str, x: str, y: str) -> Comparison | None:
+        try:
+            return self.compare(prompt, x, y)
+        except Exception as e:  # API error after LiteLLM's own retries
+            with self._lock:
+                self.errors.append(f"{type(e).__name__}: {str(e)[:200]}")
+            return None
+
     def compare_many(self, items: Sequence[tuple[str, str, str]], workers: int = 4) -> list[Comparison | None]:
-        """``items`` are (prompt, x, y). Order of results matches ``items``."""
+        """``items`` are (prompt, x, y). Order of results matches ``items``. A failed API
+        call yields None for that item rather than aborting the batch; finished verdicts
+        are cached, so re-running fills the gaps."""
+        self.errors: list[str] = []
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = [pool.submit(self.compare, *item) for item in items]
-            return [f.result() for f in tqdm(futures, desc=f"judge[{self.model}]")]
+            futures = [pool.submit(self._compare_or_none, *item) for item in items]
+            results = [f.result() for f in tqdm(futures, desc=f"judge[{self.model}]")]
+        if self.errors:
+            print(f"warning: {len(self.errors)} judge calls failed for {self.model}; first: {self.errors[0]}\n"
+                  "re-run the same command to retry them (verdicts so far are cached).")
+        return results
