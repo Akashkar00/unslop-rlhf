@@ -97,7 +97,7 @@ class Settings:
         load_dotenv()
         return cls(
             base_model=os.getenv("UNSLOP_BASE_MODEL", "Qwen/Qwen2.5-1.5B-Instruct"),
-            train_judge=os.getenv("UNSLOP_TRAIN_JUDGE", "groq/llama-3.3-70b-versatile"),
+            train_judge=os.getenv("UNSLOP_TRAIN_JUDGE", "gemini/gemini-3.8-flash"),
             eval_judge=os.getenv("UNSLOP_EVAL_JUDGE", "groq/openai/gpt-oss-120b"),
             root=Path(os.getenv("UNSLOP_ROOT", ".")),
             seed=int(os.getenv("UNSLOP_SEED", "17")),

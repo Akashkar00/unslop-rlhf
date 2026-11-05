@@ -126,9 +126,13 @@ def training_section(log: dict | None) -> dict | None:
 
 def verdict(results: dict) -> list[str]:
     lines: list[str] = []
+    models = results["judge_models"]
+    if models["train"] == models["eval"]:
+        lines.append(f"**WARN (not independent)**: `{models['eval']}` both labeled the training pairs and scored "
+                     "the result, so the eval measures fit to that judge. Only the human labels are independent.")
     ev = results["judges"].get("eval")
     if ev is None:
-        return ["**INCOMPLETE**: no independent-judge results yet. Run `unslop judge-eval`."]
+        return [*lines, "**INCOMPLETE**: no independent-judge results yet. Run `unslop judge-eval`."]
     raw, lc = CI(**ev["win_rate"]), CI(**ev["lc_win_rate"])
     if lc.lo > 0.5:
         lines.append(f"**PASS**: the independent judge prefers the tuned model even at equal length "

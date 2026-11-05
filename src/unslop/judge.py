@@ -95,7 +95,7 @@ def parse_verdict(text: str) -> Verdict | None:
 def litellm_complete(model: str, messages: list[dict]) -> str:
     import litellm
 
-    resp = litellm.completion(model=model, messages=messages, temperature=0.0, max_tokens=1024, num_retries=4)
+    resp = litellm.completion(model=model, messages=messages, temperature=0.0, max_tokens=4096, num_retries=4)
     return resp.choices[0].message.content or ""
 
 

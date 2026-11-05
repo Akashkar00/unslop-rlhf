@@ -40,7 +40,7 @@ flowchart LR
 |---|---|
 | **Length bias.** Judges like longer answers, so DPO learns to pad. | Candidates are paired only within a 1.5x length ratio, and after judging, pairs are rebalanced so "chosen is longer" is exactly 50%. The headline metric is the **length-controlled win rate**: logistic fit of win ~ log length ratio, read at equal length. This is a simplified AlpacaEval-2 LC. |
 | **Position bias.** Judges favour response A. | Every comparison runs in both orders. Training keeps only pairs where both orders agree. In eval, a flip scores 0.5. The position-consistency rate is reported. |
-| **Goodhart on the judge.** Scoring with the judge you trained against measures fit to that judge. | Train judge `llama-3.3-70b` and eval judge `gpt-oss-120b` are different families. The train judge is re-run on the eval set only to report the gap between the two. |
+| **Goodhart on the judge.** Scoring with the judge you trained against measures fit to that judge. | Train judge `gemini-3.8-flash` (Google) and eval judge `gpt-oss-120b` (OpenAI open weights, served by Groq) are different families. The train judge is re-run on the eval set only to report the gap between the two. |
 | **Gaming a word list.** | The stock-phrase lexicon (`metrics.py`) is *not* in the judge rubric, so it stays an independent check rather than a target. |
 | **Rambling.** | Truncated generations are excluded from training pairs, and the report flags it if the tuned model hits the token limit more often than the base. |
 | **Judge ≠ human.** | Blind Streamlit labeler. Agreement and Cohen's κ are computed on a random sample of *all* judged pairs, not only the easy consistent ones, plus human tuned-vs-base win rate on held-out prompts. |
@@ -52,7 +52,7 @@ Local (analysis, labeling, tests). Requires [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv sync --extra ui
-cp .env.example .env        # add GROQ_API_KEY
+cp .env.example .env        # add GEMINI_API_KEY and GROQ_API_KEY
 uv run pytest
 ```
 
@@ -72,7 +72,7 @@ Drop `--smoke` for the real run (1.5B model, all prompts). Add `--no-wait` to re
 
 ### Option B: Colab
 
-Open `notebooks/colab_pipeline.ipynb`, set the runtime to T4 GPU, add `GROQ_API_KEY` under Colab *Secrets*, and run all cells. It runs:
+Open `notebooks/colab_pipeline.ipynb`, set the runtime to T4 GPU, add `GEMINI_API_KEY` and `GROQ_API_KEY` under Colab *Secrets*, and run all cells. It runs:
 
 ```bash
 unslop prompts                 # 400 train / ≤150 eval prompts
@@ -95,7 +95,7 @@ Smoke-test the whole loop cheaply first by setting `SMOKE = True` in the noteboo
 
 ### Cost and limits
 
-At the defaults (400 train prompts × 2 pairs × 2 orders, plus 150 eval prompts × 2 orders × 2 judges), expect about 2,200 judge calls and roughly 2.5M tokens. That's a few dollars on Groq's paid tier. The free tier's daily token caps will stop you partway. Every verdict is cached in `data/cache/judge_cache.jsonl`, so rerunning the same command resumes where it stopped. `--max-rpm` throttles requests.
+At the defaults (400 train prompts × 2 pairs × 2 orders, plus 150 eval prompts × 2 orders × 2 judges), expect about 2,200 judge calls and roughly 2.5M tokens. Training labels go to Gemini and eval to Groq. Free tiers on either will likely hit daily caps partway through; paid tiers should cost a few dollars, but that is an estimate, not a measured figure. Every verdict is cached in `data/cache/judge_cache.jsonl`, so rerunning the same command resumes where it stopped. `--max-rpm` throttles requests.
 
 Any [LiteLLM](https://docs.litellm.ai/docs/providers) model string works for either judge, for example `UNSLOP_EVAL_JUDGE=anthropic/claude-sonnet-5-5`. Keep the two judges in different model families.
 

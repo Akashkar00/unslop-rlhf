@@ -66,7 +66,7 @@ def test_report_warns_on_judge_failures(tmp_path):
 
 def test_report_without_eval_is_incomplete(tmp_path):
     results = build_report(Paths(tmp_path), MODELS, n_boot=10)
-    assert results["verdict"][0].startswith("**INCOMPLETE**")
+    assert results["verdict"][-1].startswith("**INCOMPLETE**")
 
 
 def test_prompt_split_has_no_leakage():
@@ -78,3 +78,9 @@ def test_prompt_split_has_no_leakage():
     assert len(train) == 49  # dup and Coding filtered, "Write about 7" removed for overlap
     assert all(r["prompt"] != "Write about 7" for r in train)
     assert len(evals) == 1
+
+
+def test_report_warns_when_one_judge_does_both_jobs(tmp_path):
+    _write_eval(Paths(tmp_path), 50, tuned_wins_by_length=False)
+    results = build_report(Paths(tmp_path), {"train": "same", "eval": "same"}, n_boot=50)
+    assert results["verdict"][0].startswith("**WARN (not independent)**")
