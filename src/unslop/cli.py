@@ -243,5 +243,21 @@ def report(n_boot: int = 2000) -> None:
     typer.echo(f"\nfull report -> {s.paths.report_md}")
 
 
+@app.command("synthetic-demo")
+def synthetic_demo(n: int = 150, n_boot: int = 2000) -> None:
+    """Write clearly-labeled SYNTHETIC example reports to reports/synthetic/ (no API calls, no GPU)."""
+    from .synthetic import SCENARIOS, run_scenario
+
+    s = _settings()
+    out_dir = s.paths.report_md.parent / "synthetic"
+    for name in SCENARIOS:
+        results = run_scenario(name, out_dir, {"train": s.train_judge, "eval": s.eval_judge}, n=n,
+                               seed=s.seed, n_boot=n_boot)
+        typer.echo(f"[{name}] (synthetic)")
+        for line in results["verdict"]:
+            typer.echo(f"  - {line}")
+    typer.echo(f"\nsynthetic reports -> {out_dir}")
+
+
 if __name__ == "__main__":
     app()

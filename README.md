@@ -101,7 +101,28 @@ Any [LiteLLM](https://docs.litellm.ai/docs/providers) model string works for eit
 
 ## Results
 
-Nothing here yet. Run the pipeline, and `reports/results.md` will be generated with CIs and the automatic verdict. Numbers in this README should be copied from that file, not written by hand.
+**Status: INCOMPLETE.** The preference data is built, but the full DPO run on the Kaggle T4 was stopped before it finished, so there is no trained model to evaluate yet. The numbers below are copied from [`reports/results.md`](reports/results.md), which is generated from the run, not written by hand.
+
+Preference data (Qwen2.5-1.5B-Instruct, 400 no_robots prompts × 4 samples, judged by Gemini 3.8 Flash):
+
+| Stat | Value |
+|---|---|
+| Candidates (truncated share) | 1,600 (13.8%, excluded) |
+| Pairs judged / attempted | 1,305 / 1,305 |
+| Position-consistent verdicts | 71.2% |
+| Judge chose the longer response | 47.5% |
+| Final DPO pairs after length balancing | 795 (chosen is longer in exactly 50.0%) |
+
+### What the report looks like (synthetic)
+
+[`reports/synthetic/`](reports/synthetic/) holds two **synthetic** reports, produced by `uv run unslop synthetic-demo` from fabricated judgments with a known ground truth. They are not results. They show that the auditor tells a real improvement apart from a reward hack:
+
+| Synthetic scenario | Verdict |
+|---|---|
+| [`honest`](reports/synthetic/honest.md): tuned model better at any length | PASS; stock-phrase rate down; humans agree |
+| [`length_hack`](reports/synthetic/length_hack.md): tuned model only writes ~1.8× longer | NO CLAIM, plus WARN for length hacking, Goodhart gap, stock phrases up and rambling |
+
+`tests/test_synthetic.py` checks that these verdicts stay that way.
 
 ## Honest limitations
 

@@ -1,0 +1,99 @@
+{
+  "synthetic": true,
+  "scenario": "honest",
+  "seed": 17,
+  "judge_models": {
+    "train": "gemini/gemini-3.8-flash",
+    "eval": "anthropic/claude-sonnet-5-5"
+  },
+  "judges": {
+    "eval": {
+      "n": 150,
+      "attempted": 150,
+      "win_rate": {
+        "point": 0.7233333333333334,
+        "lo": 0.67,
+        "hi": 0.7733333333333333
+      },
+      "lc_win_rate": {
+        "point": 0.7370363309400286,
+        "lo": 0.671322824574326,
+        "hi": 0.7972334838736612
+      },
+      "position_consistent_share": 0.62,
+      "tuned_longer_share": 0.22666666666666666
+    },
+    "train": {
+      "n": 150,
+      "attempted": 150,
+      "win_rate": {
+        "point": 0.69,
+        "lo": 0.6366666666666667,
+        "hi": 0.7433333333333333
+      },
+      "lc_win_rate": {
+        "point": 0.6859556635811591,
+        "lo": 0.6253023464862645,
+        "hi": 0.7470915346102404
+      },
+      "position_consistent_share": 0.5666666666666667,
+      "tuned_longer_share": 0.22666666666666666
+    }
+  },
+  "style": {
+    "base": {
+      "n": 150,
+      "mean_words": 204.90666666666667,
+      "slop_per_1k_words": 3.611400312337324,
+      "em_dash_per_1k_words": 0.0,
+      "list_or_header_share": 0.0,
+      "distinct_2": 0.025403779506963972
+    },
+    "tuned": {
+      "n": 150,
+      "mean_words": 184.82,
+      "slop_per_1k_words": 1.478916423186524,
+      "em_dash_per_1k_words": 0.0,
+      "list_or_header_share": 0.0,
+      "distinct_2": 0.024045261669024046
+    },
+    "truncated_share": {
+      "base": 0.10666666666666667,
+      "tuned": 0.06666666666666667
+    },
+    "mean_words_delta": {
+      "point": -20.086666666666666,
+      "lo": -26.268,
+      "hi": -13.552333333333339
+    },
+    "slop_per_1k_delta": {
+      "point": -2.1324838891508002,
+      "lo": -2.9734028428121686,
+      "hi": -1.2609940432915558
+    }
+  },
+  "human": {
+    "human_eval": {
+      "n": 100,
+      "win_rate": {
+        "point": 0.69,
+        "lo": 0.6,
+        "hi": 0.78
+      }
+    },
+    "eval_judge_vs_human": {
+      "n": 100,
+      "agreement": 0.42,
+      "decisive_n": 63,
+      "decisive_agreement": 0.6666666666666666,
+      "cohen_kappa": 0.03252710592160136
+    }
+  },
+  "pairs": null,
+  "training": null,
+  "verdict": [
+    "**PASS**: the independent judge prefers the tuned model even at equal length (LC win rate 73.7% [67.1%, 79.7%]).",
+    "Stock-phrase rate fell by 2.13 per 1k words [-2.97, -1.26] (a metric the judge never saw).",
+    "Human raters agree with the judge (tuned win rate 69.0% [60.0%, 78.0%], n=100)."
+  ]
+}

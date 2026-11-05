@@ -1,0 +1,102 @@
+{
+  "synthetic": true,
+  "scenario": "length_hack",
+  "seed": 17,
+  "judge_models": {
+    "train": "gemini/gemini-3.8-flash",
+    "eval": "anthropic/claude-sonnet-5-5"
+  },
+  "judges": {
+    "eval": {
+      "n": 150,
+      "attempted": 150,
+      "win_rate": {
+        "point": 0.8366666666666667,
+        "lo": 0.79,
+        "hi": 0.88
+      },
+      "lc_win_rate": {
+        "point": 0.4253910383429607,
+        "lo": 0.1990048597673652,
+        "hi": 0.6643163759538958
+      },
+      "position_consistent_share": 0.78,
+      "tuned_longer_share": 1.0
+    },
+    "train": {
+      "n": 150,
+      "attempted": 150,
+      "win_rate": {
+        "point": 0.9133333333333333,
+        "lo": 0.8766666666666667,
+        "hi": 0.9433333333333334
+      },
+      "lc_win_rate": {
+        "point": 0.6540111731277398,
+        "lo": 0.41320039131660996,
+        "hi": 0.8632449847715795
+      },
+      "position_consistent_share": 0.8533333333333334,
+      "tuned_longer_share": 1.0
+    }
+  },
+  "style": {
+    "base": {
+      "n": 150,
+      "mean_words": 204.84666666666666,
+      "slop_per_1k_words": 3.872815439190289,
+      "em_dash_per_1k_words": 0.0,
+      "list_or_header_share": 0.0,
+      "distinct_2": 0.025967230271118816
+    },
+    "tuned": {
+      "n": 150,
+      "mean_words": 367.82666666666665,
+      "slop_per_1k_words": 5.618588465581614,
+      "em_dash_per_1k_words": 0.0,
+      "list_or_header_share": 0.0,
+      "distinct_2": 0.0185918871765048
+    },
+    "truncated_share": {
+      "base": 0.12666666666666668,
+      "tuned": 0.3
+    },
+    "mean_words_delta": {
+      "point": 162.98,
+      "lo": 148.07316666666665,
+      "hi": 179.3601666666667
+    },
+    "slop_per_1k_delta": {
+      "point": 1.745773026391326,
+      "lo": 0.7577423490563723,
+      "hi": 2.6947454600993033
+    }
+  },
+  "human": {
+    "human_eval": {
+      "n": 100,
+      "win_rate": {
+        "point": 0.5,
+        "lo": 0.4,
+        "hi": 0.6
+      }
+    },
+    "eval_judge_vs_human": {
+      "n": 100,
+      "agreement": 0.42,
+      "decisive_n": 83,
+      "decisive_agreement": 0.5060240963855421,
+      "cohen_kappa": 0.00854700854700846
+    }
+  },
+  "pairs": null,
+  "training": null,
+  "verdict": [
+    "**NO CLAIM**: after length control, the difference is not significant (LC win rate 42.5% [19.9%, 66.4%]).",
+    "**WARN (length hacking)**: the raw win is significant, but it goes away once length is controlled. The model learned to write more, not better.",
+    "**WARN (Goodhart gap)**: the judge used for training rates the tuned model +23% higher than the independent judge. Part of the gain is fitting one judge's taste.",
+    "**WARN**: stock-phrase rate went *up* by +1.75 per 1k words [+0.76, +2.69].",
+    "**WARN (rambling)**: 30% of tuned outputs hit the token limit vs 13% for base.",
+    "Human raters do not clearly support the judge (tuned win rate 50.0% [40.0%, 60.0%], n=100)."
+  ]
+}
