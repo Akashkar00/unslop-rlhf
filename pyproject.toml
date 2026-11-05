@@ -1,0 +1,41 @@
+[project]
+name = "unslop"
+version = "0.1.0"
+description = "Preference-tune a small open model so it writes like a person, then audit whether it actually got better or just learned to game the judge."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets>=3.0",
+    "litellm>=1.60",
+    "numpy>=1.26",
+    "python-dotenv>=1.0",
+    "tqdm>=4.66",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+ui = ["streamlit>=1.40"]
+# GPU-side only (Colab). Pinned because the TRL DPOTrainer API moves between minors.
+train = [
+    "accelerate>=1.3",
+    "peft>=0.15,<0.17",
+    "torch>=2.3",
+    "transformers>=4.51,<4.56",
+    "trl>=0.19,<0.20",
+]
+
+[project.scripts]
+unslop = "unslop.cli:app"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/unslop"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
