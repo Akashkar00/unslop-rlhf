@@ -1,5 +1,7 @@
 # unslop
 
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Akashkar00/unslop-rlhf/blob/main/notebooks/colab_pipeline.ipynb)
+
 **Preference-tune a small open model so it writes like a person, then check whether it actually got better or just learned to game the judge.**
 
 ## Why this project
