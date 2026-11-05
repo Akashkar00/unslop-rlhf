@@ -87,3 +87,44 @@ def test_compare_many_turns_api_errors_into_none():
     results = judge.compare_many([("p", "x", "y"), ("p", "boom", "y")], workers=2)
     assert results[0] is not None and results[1] is None
     assert len(judge.errors) == 1 and "429" in judge.errors[0]
+
+
+class _FakeMessages:
+    def __init__(self, stop_reason="end_turn"):
+        self.calls, self.stop_reason = [], stop_reason
+
+    def create(self, **kwargs):
+        from types import SimpleNamespace as NS
+
+        self.calls.append(kwargs)
+        return NS(stop_reason=self.stop_reason, stop_details=NS(category="cyber"),
+                  content=[NS(type="thinking", thinking=""), NS(type="text", text='{"winner": "B"}')])
+
+
+def test_anthropic_route_sends_no_sampling_params(monkeypatch):
+    from types import SimpleNamespace as NS
+
+    from unslop import judge as judge_mod
+
+    fake = _FakeMessages()
+    monkeypatch.setattr(judge_mod, "_anthropic_client", lambda: NS(messages=fake))
+    j = PairwiseJudge("anthropic/claude-sonnet-5-5")
+    assert j.judge_once("p", "a", "b").winner == "B"
+
+    (call,) = fake.calls
+    assert call["model"] == "claude-sonnet-5-5"
+    assert "temperature" not in call and "top_p" not in call
+    assert call["output_config"] == {"effort": "low"}
+    assert call["system"].startswith("You are a demanding editor")
+    assert [m["role"] for m in call["messages"]] == ["user"]
+
+
+def test_anthropic_refusal_is_a_dropped_verdict(monkeypatch):
+    from types import SimpleNamespace as NS
+
+    from unslop import judge as judge_mod
+
+    monkeypatch.setattr(judge_mod, "_anthropic_client", lambda: NS(messages=_FakeMessages("refusal")))
+    j = PairwiseJudge("anthropic/claude-sonnet-5-5")
+    assert j.compare_many([("p", "x", "y")], workers=1) == [None]
+    assert "refused" in j.errors[0]

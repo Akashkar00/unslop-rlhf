@@ -5,6 +5,7 @@ description = "Preference-tune a small open model so it writes like a person, th
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=1.0",
     "datasets>=3.0",
     "litellm>=1.60",
     "numpy>=1.26",

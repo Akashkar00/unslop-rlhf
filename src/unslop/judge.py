@@ -7,6 +7,7 @@ order is not a preference, it's noise, and we treat it that way.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import re
@@ -99,6 +100,37 @@ def litellm_complete(model: str, messages: list[dict]) -> str:
     return resp.choices[0].message.content or ""
 
 
+@functools.cache
+def _anthropic_client():
+    import anthropic
+
+    return anthropic.Anthropic(max_retries=4)  # reads ANTHROPIC_API_KEY
+
+
+def anthropic_complete(model: str, messages: list[dict]) -> str:
+    """Claude through the official SDK rather than LiteLLM.
+
+    Current Claude models reject non-default sampling parameters, so there is no
+    temperature here. Thinking is always on; low effort keeps a pairwise verdict
+    cheap, since it's closer to classification than to open-ended reasoning.
+    """
+    system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
+    turns = [m for m in messages if m["role"] != "system"]
+    resp = _anthropic_client().messages.create(
+        model=model, max_tokens=16000, system=system, messages=turns, output_config={"effort": "low"}
+    )
+    if resp.stop_reason == "refusal":
+        category = resp.stop_details.category if resp.stop_details else None
+        raise RuntimeError(f"{model} refused (category={category})")
+    return "".join(b.text for b in resp.content if b.type == "text")
+
+
+def default_complete(model: str, messages: list[dict]) -> str:
+    if model.startswith("anthropic/"):
+        return anthropic_complete(model.removeprefix("anthropic/"), messages)
+    return litellm_complete(model, messages)
+
+
 class _RateLimiter:
     def __init__(self, max_rpm: int | None):
         self._interval = 60.0 / max_rpm if max_rpm else 0.0
@@ -125,7 +157,7 @@ class PairwiseJudge:
         parse_retries: int = 2,
     ):
         self.model = model
-        self._complete = complete_fn or litellm_complete
+        self._complete = complete_fn or default_complete
         self._limiter = _RateLimiter(max_rpm)
         self._parse_retries = parse_retries
         self._cache_path = cache_path
