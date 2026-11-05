@@ -6,3 +6,4 @@ __pycache__/
 data/
 outputs/
 reports/results.json
+.kaggle_build/

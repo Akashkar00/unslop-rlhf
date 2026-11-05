@@ -168,6 +168,69 @@ def judge_eval(
     ))
 
 
+def _kaggle_finish(ref: str) -> None:
+    from . import kaggle_runner as kr
+
+    s = _settings()
+    state = kr.wait_kernel(ref, echo=typer.echo)
+    out_dir = kr.fetch(ref, s.paths, s.root / ".kaggle_build")
+    if state != "complete":
+        typer.echo(f"\nkernel ended with '{state}'. Last log lines:\n{kr.log_tail(out_dir)}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"outputs unpacked into {s.root.resolve()}")
+
+
+def _kaggle_stage(stage_name: str, smoke: bool, wait: bool) -> None:
+    from . import kaggle_runner as kr
+
+    s = _settings()
+    build = s.root / ".kaggle_build"
+    stage = kr.stages(smoke)[stage_name]
+    try:
+        user = kr.kaggle_user()
+        repo, commit = kr.pushed_commit()
+        dataset = None
+        if stage.inputs:
+            files = {name: s.root / dest for name, dest in stage.inputs.items()}
+            if missing := [str(p) for p in files.values() if not p.exists()]:
+                raise kr.KaggleError(f"missing inputs: {missing}. Run `unslop build-pairs` first.")
+            dataset = kr.push_dataset(user, files, build)
+            typer.echo(f"uploaded private dataset {dataset}; waiting for Kaggle to process it")
+            kr.wait_dataset(dataset)
+        env = {"UNSLOP_BASE_MODEL": kr.SMOKE_MODEL if smoke else s.base_model, "UNSLOP_SEED": str(s.seed)}
+        cfg = {"repo": repo, "commit": commit, "env": env, "inputs": stage.inputs,
+               "commands": stage.commands, "outputs": stage.outputs}
+        ref = kr.push_kernel(user, stage, cfg, build, dataset)
+    except kr.KaggleError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1) from e
+    typer.echo(f"pushed {ref} @ {commit[:8]} ({env['UNSLOP_BASE_MODEL']}) -> https://www.kaggle.com/code/{ref}")
+    if wait:
+        _kaggle_finish(ref)
+    else:
+        typer.echo(f"later: unslop kaggle-fetch {stage_name}")
+
+
+@app.command("kaggle-generate")
+def kaggle_generate(smoke: bool = False, wait: bool = True) -> None:
+    """[Kaggle GPU] prompts + candidate sampling; downloads train_candidates.jsonl."""
+    _kaggle_stage("generate", smoke, wait)
+
+
+@app.command("kaggle-train")
+def kaggle_train(smoke: bool = False, wait: bool = True) -> None:
+    """[Kaggle GPU] uploads DPO pairs, trains, samples tuned vs base; downloads adapter + eval outputs."""
+    _kaggle_stage("train", smoke, wait)
+
+
+@app.command("kaggle-fetch")
+def kaggle_fetch(stage: str) -> None:
+    """Wait for a pushed Kaggle stage ('generate' or 'train') and download its outputs."""
+    from . import kaggle_runner as kr
+
+    _kaggle_finish(f"{kr.kaggle_user()}/unslop-{stage}")
+
+
 @app.command()
 def report(n_boot: int = 2000) -> None:
     """Write reports/results.md and reports/results.json."""

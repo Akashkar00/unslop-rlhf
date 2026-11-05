@@ -56,7 +56,23 @@ cp .env.example .env        # add GROQ_API_KEY
 uv run pytest
 ```
 
-GPU steps run in Colab. Open `notebooks/colab_pipeline.ipynb`, set the runtime to T4 GPU, add `GROQ_API_KEY` under Colab *Secrets*, and run all cells. It runs:
+### Option A: Kaggle from the terminal
+
+GPU steps run as private Kaggle kernels. Judge calls stay on your machine, so your API key never goes to Kaggle. You need the [Kaggle CLI](https://github.com/Kaggle/kaggle-cli) logged in, and your code committed and pushed, because each kernel clones the exact commit you're on.
+
+```bash
+uv run unslop kaggle-generate --smoke   # [Kaggle T4] prompts + candidates, downloaded into data/
+uv run unslop build-pairs               # local: train judge → DPO pairs
+uv run unslop kaggle-train --smoke      # [Kaggle T4] upload pairs (private dataset), DPO, tuned-vs-base samples
+uv run unslop judge-eval                # local: independent judge + Goodhart-gap judge
+uv run unslop report
+```
+
+Drop `--smoke` for the real run (1.5B model, all prompts). Add `--no-wait` to return right away, then run `unslop kaggle-fetch generate|train` later.
+
+### Option B: Colab
+
+Open `notebooks/colab_pipeline.ipynb`, set the runtime to T4 GPU, add `GROQ_API_KEY` under Colab *Secrets*, and run all cells. It runs:
 
 ```bash
 unslop prompts                 # 400 train / ≤150 eval prompts
